@@ -35,6 +35,10 @@ class _HomeTabNavigatorState extends State<HomeTabNavigator> {
     _onItemTapped(1);
   }
 
+  void goToProfileTab() {
+    _onItemTapped(2); // ProfileApp is at index 2
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -48,30 +52,13 @@ class _HomeTabNavigatorState extends State<HomeTabNavigator> {
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
               // History Tab
-              // History Tab
-              GestureDetector(
-                onTap: () => _onItemTapped(0),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(
-                      FontAwesomeIcons.clock,
-                      size: _currentIndex == 0 ? 22 : 18, // ⬅️ size change
-                      color: _currentIndex == 0 ? Color(0xFF0092B4) : Colors.grey,
-                    ),
-                    Text(
-                      "History",
-                      style: TextStyle(
-                        fontSize: _currentIndex == 0 ? 12 : 10, // ⬅️ size change
-                        fontWeight: _currentIndex == 0 ? FontWeight.w600 : FontWeight.normal,
-                        color: _currentIndex == 0 ? Color(0xFF0092B4) : Colors.grey,
-                      ),
-                    ),
-                  ],
-                ),
+              _buildTab(
+                index: 0,
+                icon: FontAwesomeIcons.clock,
+                label: "History",
               ),
 
-// Scanner Tab - Always Highlighted
+              // Scanner Tab - Always Highlighted
               SizedBox(
                 width: 48,
                 height: 48,
@@ -84,39 +71,52 @@ class _HomeTabNavigatorState extends State<HomeTabNavigator> {
                     icon: Icon(
                       Icons.qr_code_scanner,
                       color: Colors.white,
-                      size: _currentIndex == 1 ? 28 : 24, // optional zoom here too
+                      size: _currentIndex == 1 ? 28 : 24,
                     ),
                     onPressed: () => _onItemTapped(1),
                   ),
                 ),
               ),
 
-// Profile Tab
-              GestureDetector(
-                onTap: () => _onItemTapped(2),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(
-                      FontAwesomeIcons.link,
-                      size: _currentIndex == 2 ? 22 : 18, // ⬅️ size change
-                      color: _currentIndex == 2 ? Color(0xFF0092B4) : Colors.grey,
-                    ),
-                    Text(
-                      "Connect",
-                      style: TextStyle(
-                        fontSize: _currentIndex == 2 ? 12 : 10, // ⬅️ size change
-                        fontWeight: _currentIndex == 2 ? FontWeight.w600 : FontWeight.normal,
-                        color: _currentIndex == 2 ? Color(0xFF0092B4) : Colors.grey,
-                      ),
-                    ),
-                  ],
-                ),
+              // Profile Tab
+              _buildTab(
+                index: 2,
+                icon: FontAwesomeIcons.link,
+                label: "Connect",
               ),
-
             ],
           ),
         ),
+      ),
+    );
+  }
+
+// Helper method to reduce duplicate code
+  Widget _buildTab({
+    required int index,
+    required IconData icon,
+    required String label,
+  }) {
+    return GestureDetector(
+      onTap: () => _onItemTapped(index),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            icon,
+            size: _currentIndex == index ? 22 : 18,
+            color: _currentIndex == index ? Color(0xFF0092B4) : Colors.grey,
+          ),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: _currentIndex == index ? 12 : 10,
+              fontWeight:
+              _currentIndex == index ? FontWeight.w600 : FontWeight.normal,
+              color: _currentIndex == index ? Color(0xFF0092B4) : Colors.grey,
+            ),
+          ),
+        ],
       ),
     );
   }
