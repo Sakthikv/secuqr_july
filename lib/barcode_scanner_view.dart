@@ -440,7 +440,7 @@ class _BarcodeScannerViewState extends State<BarcodeScannerView> {
   }
 
   void _startResetZoomTimer() {
-    _resetZoomTimer = Timer.periodic(const Duration(seconds: 10), (_) {
+    resetZoomTimer = Timer.periodic(const Duration(seconds: 10), () {
       if (!_isCapturing) {
         _resetZoomLevel();
       }
@@ -853,27 +853,92 @@ class _BarcodeScannerViewState extends State<BarcodeScannerView> {
   }
 
   Future<void> _showRetryDialog(String errorMessage) async {
+    final screenWidth = MediaQuery.of(context).size.width;
+
     await showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (context) => AlertDialog(
-        backgroundColor: Colors.white,
-        title: const Text("Error"),
-        content: Text(errorMessage),
-        actions: [
-          TextButton(
-            onPressed: () {
-              Navigator.pop(context); // Close dialog
-              _startScanning();
-            },
-            child: const Text("Retry"),
-          )
-        ],
-      ),
+      builder: (context) {
+        return WillPopScope(
+          onWillPop: () async {
+            Navigator.of(context).pop(); // Close the dialog
+            _startScanning(); // Go back to scanning
+            return false; // Prevent default pop (we handle it manually)
+          },
+          child: Dialog(
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            backgroundColor: Colors.white,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // Error Icon
+                  Icon(Icons.error_outline, size: screenWidth * 0.15, color: Colors.redAccent),
+                  const SizedBox(height: 16),
+
+                  // Title
+                  const Text(
+                    "Something went wrong!",
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF333333),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+
+                  // Error Message
+                  Text(
+                    errorMessage,
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      fontSize: 14,
+                      color: Color(0xFF555555),
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+
+                  // Retry Button
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: () {
+                        Navigator.pop(context); // Close dialog
+                        if (_croppedImageBytes != null) {
+                          sendImageToApi(_croppedImageBytes!);
+                        } else {
+                          _startScanning();
+                        }
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.redAccent,
+                        foregroundColor: Colors.white,
+                        elevation: 0,
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      child: const Text(
+                        "Retry",
+                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
     );
   }
 
   Widget buildCaptureDialog(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+
     return WillPopScope(
       onWillPop: () async {
         Navigator.of(context).pop();
@@ -888,91 +953,103 @@ class _BarcodeScannerViewState extends State<BarcodeScannerView> {
         backgroundColor: Colors.white,
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
-          child: LayoutBuilder(
-            builder: (context, constraints) {
-              return Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  // Title Text
-                  const Text(
-                    'Tap Valid to check if this\nproduct is genuine',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                      color: Color(0xFF333333),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Title Text
+              const Text(
+                'Tap Validate to check its Originality',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  color: Color(0xFF333333),
+                ),
+              ),
+              const SizedBox(height: 16),
 
-                  // Image
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(12),
-                    child: Image.memory(_croppedImageBytes!),
-                  ),
-                  const SizedBox(height: 20),
+              // Image
+              ClipRRect(
+                borderRadius: BorderRadius.circular(12),
+                child: Image.memory(
+                  _croppedImageBytes!,
+                  width: screenWidth * 0.6, // Responsive image width
+                  fit: BoxFit.contain,
+                ),
+              ),
+              const SizedBox(height: 20),
 
-                  // Buttons Row
-                  Row(
+              // Responsive Buttons Row
+              LayoutBuilder(builder: (context, constraints) {
+                double buttonFontSize = screenWidth / 25; // Dynamic font size
+
+                return IntrinsicWidth(
+                  child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                     children: [
-                      // Valid Button
+                      // Validate Button
                       Expanded(
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 4.0),
-                          child: ElevatedButton.icon(
-                            onPressed: () {
-                              Navigator.of(context).pop();
-                              sendImageToApi(_croppedImageBytes!);
-                            },
-                            icon: const Icon(Icons.check_circle, color: Colors.green),
-                            label: const Text("Validate"),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color(0xFFF0F0F0),
-                              foregroundColor: Colors.black,
-                              elevation: 0,
-                              padding: const EdgeInsets.symmetric(vertical: 12),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(10),
-                              ),
+                        child: ElevatedButton.icon(
+                          onPressed: () {
+                            Navigator.of(context).pop();
+                            sendImageToApi(_croppedImageBytes!);
+                          },
+                          icon: const Icon(Icons.check_circle, color: Colors.green),
+                          label: Text(
+                            "Check",
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(fontSize: buttonFontSize),
+                          ),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFFF0F0F0),
+                            foregroundColor: Colors.black,
+                            elevation: 0,
+                            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10),
                             ),
                           ),
                         ),
                       ),
 
+                      const SizedBox(width: 8),
+
                       // Scan Again Button
                       Expanded(
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 4.0),
-                          child: ElevatedButton.icon(
-                            onPressed: _isButtonDisabled
-                                ? null
-                                : () {
-                              setState(() {
-                                _isButtonDisabled = true;
-                              });
-                              Navigator.of(context).pop();
-                              _startScanning();
-                            },
-                            icon: const Icon(Icons.camera_alt, color: Color(0xFF0092B4)),
-                            label: const Text("Scan Again"),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color(0xFFF0F0F0),
-                              foregroundColor: Colors.black,
-                              elevation: 0,
-                              padding: const EdgeInsets.symmetric(vertical: 12),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(10),
-                              ),
+                        child: ElevatedButton.icon(
+                          onPressed: _isButtonDisabled
+                              ? null
+                              : () {
+                            setState(() {
+                              _isButtonDisabled = true;
+                            });
+                            Navigator.of(context).pop();
+                            _startScanning();
+                          },
+                          icon: const Icon(Icons.camera_alt, color: Color(0xFF0092B4)),
+                          label: Text(
+                            "Re-Scan",
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(fontSize: buttonFontSize),
+                          ),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFFF0F0F0),
+                            foregroundColor: Colors.black,
+                            elevation: 0,
+                            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10),
                             ),
                           ),
                         ),
                       ),
                     ],
                   ),
-                ],
-              );
-            },
+                );
+              }),
+            ],
           ),
         ),
       ),
@@ -994,14 +1071,14 @@ class _BarcodeScannerViewState extends State<BarcodeScannerView> {
         resultIcon = Icons.check_circle;
         resultTitle = "Genuine";
         resultMessage1 = "Your Product is Secured & Authenticated by SecuQR";
-        cen=20;
+        cen=5;
         break;
       case 0:
         resultColor = Colors.red;
         resultIcon = Icons.cancel;
         resultTitle = "Duplicate";
         resultMessage1 = "Not an authenticated\nSecuQR product";
-        cen=55;
+        cen=30;
         break;
       default:
         resultColor = Colors.orange;
@@ -1067,7 +1144,7 @@ class _BarcodeScannerViewState extends State<BarcodeScannerView> {
             Text(
               message,
               textAlign: TextAlign.center,
-              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w500),
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w500,color: resultColor),
             ),
             const SizedBox(height: 24),
             Column(
