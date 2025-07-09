@@ -4,7 +4,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:google_mlkit_commons/google_mlkit_commons.dart';
+import 'package:secuqr1/profile.dart';
 import 'package:secuqr1/user_profile.dart';
+import 'HomeTabNavigator.dart';
 import 'barcode_scanner_view.dart';
 import 'border_painter.dart';
 import 'square_clipper.dart';
@@ -68,7 +70,7 @@ class _CameraViewState extends State<CameraView> {
     final screenWidth = MediaQuery.of(context).size.width;
     final screenHeight = MediaQuery.of(context).size.height;
 
-    final topContentOffset = screenHeight * 0.05;
+    final topContentOffset = screenHeight * 0.03;
     final squareOffset = screenHeight * 0.0001; // 👈 Moved down
 
 
@@ -158,18 +160,31 @@ class _CameraViewState extends State<CameraView> {
                     children: [
                       Image.asset(
                         'images/FUll_Lockup_Tagline_White.png',
-                        width: screenWidth * 0.5,
+                        width: screenWidth * 0.55,
                         height: screenWidth * 0.2,
                       ),
                     ],
                   ),
                 ),
+                // Padding(
+                //   padding: EdgeInsets.only(right: screenWidth * 0.05),
+                //   child: Icon(
+                //     Icons.help_outline,
+                //     color: Colors.black,
+                //     size: screenWidth * 0.07,
+                //   ),
+                // ),
                 Padding(
                   padding: EdgeInsets.only(right: screenWidth * 0.05),
-                  child: Icon(
-                    Icons.help_outline,
-                    color: Colors.black,
-                    size: screenWidth * 0.07,
+                  child: GestureDetector(
+                    onTap: () {
+                      HomeTabNavigator.globalKey.currentState?.goToProfileTab();
+                    },
+                    child: Icon(
+                      Icons.help_outline,
+                      color: Colors.black,
+                      size: screenWidth * 0.07,
+                    ),
                   ),
                 ),
               ],
@@ -205,7 +220,7 @@ class _CameraViewState extends State<CameraView> {
             ),
           ),
           Positioned(
-            top: topContentOffset + screenWidth * 0.35,
+            top: topContentOffset + screenWidth * 0.39,
             left: 0,
             right: 0,
             child: Text(
@@ -292,9 +307,9 @@ class _CameraViewState extends State<CameraView> {
       enableAudio: false,
       imageFormatGroup: Platform.isAndroid ? ImageFormatGroup.nv21 : ImageFormatGroup.bgra8888,
     );
-    await _controller?.initialize().then((_) async {
+    await controller?.initialize().then(() async {
       if (!mounted) return;
-      await _controller?.startImageStream(_processCameraImage).then((_) {
+      await controller?.startImageStream(_processCameraImage).then(() {
         if (widget.onCameraFeedReady != null) {
           widget.onCameraFeedReady!();
         }
